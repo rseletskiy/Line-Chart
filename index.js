@@ -6,28 +6,84 @@ const DPI_HEIGHT = HEIGHT * 2;
 const VIEW_WIDTH = DPI_WIDTH;
 const VIEW_HEIGHT = DPI_HEIGHT - PADDING * 2;
 const ROWS_COUNT = 5;
+const CIRCLE_RADIUS = 8;
+
+const lineChart = chart(document.getElementById("chart"), getChartData());
+lineChart.init();
 
 function chart(canvas, data) {
   const ctx = canvas.getContext("2d");
+  let raf;
   canvas.style.width = WIDTH + "px";
   canvas.style.height = HEIGHT + "px";
   canvas.width = DPI_WIDTH;
   canvas.height = DPI_HEIGHT;
 
-  const [yMin, yMax] = computeBoundaries(data);
-  const yRatio = VIEW_HEIGHT / (yMax - yMin);
-  const xRatio = VIEW_WIDTH / (data.columns[0].length - 2);
+  const proxy = new Proxy(
+    {},
+    {
+      set(...args) {
+        const result = Reflect.set(...args);
+        raf = requestAnimationFrame(paint);
+        return result;
+      },
+    }
+  );
 
-  const yData = data.columns.filter((col) => data.types[col[0]] === "line");
-  const xData = data.columns.filter((col) => data.types[col[0]] !== "line")[0];
+  function mousemove({ clientX, clientY, isTrusted }) {
+    if (!isTrusted) return;
+    const { left } = canvas.getBoundingClientRect();
+    proxy.mouse = {
+        x: (clientX - left) * 2
+    }
+  }
 
-  yAxis(ctx, yMin, yMax);
-  xAxis(ctx, xData, xRatio);
+  function mouseleave() {
+    proxy.mouse = null;
+  }
 
-  yData.map(toCoords(xRatio, yRatio)).forEach((coords, i) => {
-    const color = data.colors[yData[i][0]];
-    line(ctx, coords, { color });
-  });
+  canvas.addEventListener("mousemove", mousemove);
+  canvas.addEventListener("mouseleave", mouseleave);
+
+  function clear() {
+    ctx.clearRect(0, 0, DPI_WIDTH, DPI_HEIGHT);
+  }
+
+  function paint() {
+    clear();
+    const [yMin, yMax] = computeBoundaries(data);
+    const yRatio = VIEW_HEIGHT / (yMax - yMin);
+    const xRatio = VIEW_WIDTH / (data.columns[0].length - 2);
+
+    const yData = data.columns.filter((col) => data.types[col[0]] === "line");
+    const xData = data.columns.filter((col) => data.types[col[0]] !== "line")[0];
+  
+    yAxis(ctx, yMin, yMax);
+    xAxis(ctx, xData, xRatio, proxy);
+  
+    yData.map(toCoords(xRatio, yRatio)).forEach((coords, i) => {
+      const color = data.colors[yData[i][0]];
+      line(ctx, coords, { color });
+
+      for (const [x, y] of coords) {
+        if (isOver(proxy.mouse, x, coords.length)) {
+          circle(ctx, [x, y], color);
+          break;
+        }
+      }
+    });
+  }
+
+  return {
+    init() {
+      paint();
+    },
+    destroy() {
+      cancelAnimationFrame(raf);
+      canvas.removeEventListener("mousemove", mousemove);
+      canvas.removeEventListener("mouseleave", mouseleave);
+    },
+  };
 }
 
 function toCoords(xRatio, yRatio) {
@@ -40,17 +96,26 @@ function toCoords(xRatio, yRatio) {
       .filter((_, i) => i !== 0);
 }
 
-function xAxis(ctx, data, ratio) {
-    const colsCount = 6;
-    const step = Math.round(data.length / colsCount);
-    console.log(step);
-    ctx.beginPath();
-    for (let i = 1; i < data.length; i += step) {
-        const text = toDate(data[i]);
-        const x = i * ratio;
-        ctx.fillText(text, x, DPI_HEIGHT);
+function xAxis(ctx, data, ratio, { mouse }) {
+  const colsCount = 6;
+  const step = Math.round(data.length / colsCount);
+  ctx.beginPath();
+  for (let i = 1; i < data.length; i++) {
+    const x = i * ratio;
+    if ((i - 1) % step === 0) {
+      const text = toDate(data[i]);
+      ctx.fillText(text, x, DPI_HEIGHT - 10);
     }
-    ctx.closePath();
+
+    if (isOver(mouse, x, data.length)) {
+      ctx.save();
+      ctx.moveTo(x, PADDING / 2);
+      ctx.lineTo(x, DPI_HEIGHT - PADDING);
+      ctx.restore();
+    }
+  }
+  ctx.stroke();
+  ctx.closePath();
 }
 
 function yAxis(ctx, yMin, yMax) {
@@ -58,6 +123,7 @@ function yAxis(ctx, yMin, yMax) {
   const textStep = (yMax - yMin) / ROWS_COUNT;
 
   ctx.beginPath();
+  ctx.lineWidth = 1;
   ctx.strokeStyle = "#bbb";
   ctx.font = "normal 20px Helvetica, sans-serif";
   ctx.fillStyle = "#96a2aa";
@@ -83,7 +149,15 @@ function line(ctx, coords, {color}) {
   ctx.closePath();
 }
 
-chart(document.getElementById("chart"), getChartData());
+function circle(ctx, [x, y], color) {
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = '#fff'
+  ctx.arc(x, y, CIRCLE_RADIUS, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.closePath();
+}
 
 function computeBoundaries({ columns, types }) {
   let min;
@@ -134,6 +208,14 @@ function toDate(timestamp, withDay) {
   }
 
   return `${shortMonths[date.getMonth()]} ${date.getDate()}`;
+}
+
+function isOver(mouse, x, length) {
+  if (!mouse) return false;
+
+  const width = DPI_WIDTH / length;
+
+  return Math.abs(x - mouse.x) < width / 2;
 }
 
 function getChartData() {
