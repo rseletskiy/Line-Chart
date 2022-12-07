@@ -1,0 +1,25 @@
+{
+  "name": "Line-Chart",
+  "version": "1.0.0",
+  "description": "",
+  "main": "data.js",
+  "scripts": {
+    "serve": "parcel ./src/index.html -p 5500",
+    "build": "parcel build ./src/index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rseletskiy/Line-Chart.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rseletskiy/Line-Chart/issues"
+  },
+  "homepage": "https://github.com/rseletskiy/Line-Chart#readme",
+  "devDependencies": {
+    "parcel-bundler": "^1.12.5",
+    "sass": "^1.56.1"
+  }
+}
