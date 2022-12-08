@@ -1,6 +1,6 @@
 import { css } from "./utils";
 
-const template = () => `
+const template = (data) => `
     <div class="tooltip-title">${data.title}</div>
     <ul class="tooltip-list">
         ${data.items
@@ -17,10 +17,22 @@ const template = () => `
 `;
 
 export function tooltip(el) {
+  const clear = () => (el.innerHTML = "");
+
   return {
-    show() {},
+    show({ left, top }, data) {
+      const { width, height } = el.getBoundingClientRect();
+      clear();
+      css(el, {
+        opacity: 1,
+        visibility: 'visible',
+        top: top - height + "px",
+        left: left + width / 2 + "px",
+      });
+      el.insertAdjacentHTML("afterbegin", template(data));
+    },
     hide() {
-      css(el, { display: "none" });
+      css(el, { opacity: 0, visibility: "hidden" });
     },
   };
 }

@@ -29,14 +29,14 @@ body {
     box-shadow: 2px 3px 10px rgba(0, 0, 0, 0.2);
 }
 
-.tg-chart {
+.line-chart {
     position: relative;
 
     >canvas {
         z-index: 2;
     }
 
-    .tg-chart-slider {
+    .line-chart-slider {
         position: relative;
         margin-bottom: 1rem;
         z-index: 1;
@@ -87,9 +87,10 @@ body {
         }
     }
 
-    .tg-chart-tooltip {
+    .line-chart-tooltip {
         position: absolute;
-        display: none;
+        opacity: 0;
+        visibility: hidden;
         max-width: 200px;
         min-width: 120px;
         padding: 0.5rem;
@@ -99,6 +100,7 @@ body {
         background: #fff;
         color: #000;
         overflow: hidden;
+        transition: all .3s ease;
         z-index: 3;
 
         top: 50px;
@@ -134,7 +136,7 @@ body {
     }
 }
 
-.tg-chart-checkbox {
+.line-chart-checkbox {
     position: relative;
     display: inline-flex;
     align-items: center;
