@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -14,7 +14,21 @@
         <div class="card">
             <div class="line-chart" id="chart">
                 <div data-el="tooltip" class="line-chart-tooltip"></div>
-                <canvas></canvas>
+                <canvas data-canvas="main"></canvas>
+
+                <div class="line-chart-slider" data-el="slider">
+                    <canvas></canvas>
+                    <div data-el="left" class="line-chart-slider__left">
+                        <div class="line-chart-slider__arrow--left" data-el="arrow" data-type="left"></div>
+                    </div>
+
+                    <div data-el="window" data-type="window" class="line-chart-slider__window"></div>
+
+                    <div data-el="right" class="line-chart-slider__right">
+                        <div class="line-chart-slider__arrow--right" data-el="arrow" data-type="right"></div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
